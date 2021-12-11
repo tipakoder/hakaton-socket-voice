@@ -26,6 +26,9 @@ const create = async(req) => {
         throw new ApiError(400, "Members list is not JSON");
     }
 
+    if(membersIds.length <= 0)
+        throw new ApiError(400, "Member list is empty");
+
     const chatCreating = await Chat.create(
         {
             name,

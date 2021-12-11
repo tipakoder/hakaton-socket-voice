@@ -54,6 +54,44 @@ Account.hasMany(AccountSession, {
     }
 });
 
+const ChangePasswordRequest = connection.define(
+    "change_password_request",
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+            allowNull: false
+        },
+        account_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: Account,
+                key: "id"
+            }
+        },
+        code: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        }
+    }
+);
+
+Account.hasMany(ChangePasswordRequest, {
+    foreignKey: {
+        name: 'account_id',
+        allowNull: false,
+    }
+});
+
+ChangePasswordRequest.belongsTo(Account, {
+    foreignKey: {
+        name: "account_id",
+        allowNull: false
+    }
+});
+
 const Chat = connection.define(
     "chat",
     {
@@ -138,5 +176,6 @@ module.exports = {
     Account,
     AccountSession,
     Chat,
-    ChatMember
+    ChatMember,
+    ChangePasswordRequest
 }

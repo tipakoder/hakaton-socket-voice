@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 
-const {Account, AccountSession} = require("../main/database/models");
+const {Account, AccountSession, ChangePasswordRequest} = require("../main/database/models");
 const ApiError = require("../main/apiError");
 
 /**
@@ -22,6 +22,18 @@ const createSession = async(account_id) => {
         throw new ApiError(500, "Account session registration");
 
     return token;
+}
+
+/**
+ * Generate number code
+ * @param length
+ */
+const generatorCode = (length = 6) => {
+    const chars = "0123456789";
+    let result;
+    for(let i = 0; i < length; i++)
+        result += chars[Math.floor(Math.random() * (chars.length + 1))];
+    return result;
 }
 
 /**
@@ -57,8 +69,6 @@ const registration = async (req) => {
 
     if(password.length < 6)
         throw new ApiError(400, "Password less 6 symbols");
-
-    console.log(password)
 
     const password_hash = bcrypt.hashSync(password, 2);
 
@@ -138,10 +148,80 @@ const verifyToken = async(req) => {
     if(!account)
         throw ApiError.forbidden();
 
-    delete account.dataValues.password;
     delete account.dataValues.account_sessions;
 
     return account.dataValues;
+}
+
+/**
+ * Change password request
+ * @return {Promise<void>}
+ */
+const changePasswordRequest = async(req) => {
+    const account = verifyToken(req);
+    const code = generatorCode(6);
+
+    const createRequest = await ChangePasswordRequest.create(
+        {
+            account_id: account.id,
+            code
+        }
+    );
+
+    if(!createRequest)
+        throw new ApiError(500, "Something error create request");
+
+    return {
+        request_id: createRequest.dataValues.id,
+        code,
+        message: "т.к. почты нет, код выводим прямо сюда"
+    };
+}
+
+/**
+ * Change password based on request
+ * @param req
+ * @return {Promise<void>}
+ */
+const changePassword = async(req) => {
+    const account = verifyToken(req);
+
+    const code = req.body.code;
+    const password = req.body.password;
+
+    const existsRequest = await ChangePasswordRequest.findOne(
+        {
+            where: {
+                account_id: account.id,
+                code: code
+            }
+        }
+    );
+
+    if(!existsRequest)
+        throw new ApiError(400, "Code is not available");
+
+    if(bcrypt.compareSync(password, account.password))
+        throw new ApiError(400, "New password compare with old");
+
+    if(!await existsRequest.destroy())
+        throw new ApiError(500, "Wtf? Something crashes");
+
+    const updatePassword = await Account.update(
+        {
+            where: {
+                id: account.id
+            },
+            set: {
+                password: bcrypt.hashSync(password, 2)
+            }
+        }
+    );
+
+    if(!updatePassword)
+        throw new ApiError(500, "Wtf? Something crashes #2");
+
+    return {};
 }
 
 module.exports = {
