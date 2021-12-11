@@ -30,9 +30,10 @@ const createSession = async(account_id) => {
  */
 const generatorCode = (length = 6) => {
     const chars = "0123456789";
-    let result;
-    for(let i = 0; i < length; i++)
+    let result = "";
+    for(let i = 0; i < length; i++) {
         result += chars[Math.floor(Math.random() * (chars.length + 1))];
+    }
     return result;
 }
 
@@ -158,7 +159,7 @@ const verifyToken = async(req) => {
  * @return {Promise<void>}
  */
 const changePasswordRequest = async(req) => {
-    const login = req.get.login;
+    const login = req.query.login;
     let code = generatorCode(6);
 
     let accountByLogin;
@@ -192,13 +193,13 @@ const changePasswordRequest = async(req) => {
  * @return {Promise<void>}
  */
 const changePassword = async(req) => {
-    const code = req.body.code;
-    const password = req.body.password;
+    const code = req.query.code;
+    const password = req.query.password;
 
     const existsRequest = await ChangePasswordRequest.findOne(
         {
             where: {
-                code: code
+                code
             }
         }
     );
@@ -216,11 +217,11 @@ const changePassword = async(req) => {
 
     const updatePassword = await Account.update(
         {
+            password: bcrypt.hashSync(password, 2)
+        },
+        {
             where: {
                 id: account.id
-            },
-            set: {
-                password: bcrypt.hashSync(password, 2)
             }
         }
     );
@@ -231,10 +232,50 @@ const changePassword = async(req) => {
     return {};
 }
 
+/**
+ * Get list account by filter
+ * @param req
+ * @return {Promise<void>}
+ */
+const getList = async(req) => {
+    const account = await verifyToken(req);
+    let filter = req.body.filter;
+
+    if(typeof filter === "undefined" || !filter) {
+        filter = {};
+    } else {
+        try{
+            filter = JSON.parse(filter);
+        } catch (e) {
+            throw new ApiError(400, "Filter is not JSON");
+        }
+    }
+
+    const getListResult = await Account.findAll(
+        {
+            attributes: [
+                "id",
+                "nickname"
+            ],
+            where: filter
+        }
+    );
+
+    if(!getListResult)
+        return {
+            accounts: []
+        };
+
+    return {
+        accounts: getListResult
+    }
+}
+
 module.exports = {
     registration,
     auth,
     verifyToken,
     changePasswordRequest,
-    changePassword
+    changePassword,
+    getList
 }

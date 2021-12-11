@@ -36,17 +36,35 @@ class Socket {
             console.log(colors.blue(`SOCKET USER CONNECTED`));
 
             client.on("add_user", async(msg) => {
-                const chat_id = msg.chat_id;
+                try{
+                    const chat_id = msg.chat_id;
 
-                if(typeof chat_id === "undefined")
-                    throw new ApiError(400, "Chat id undefined");
+                    if(typeof chat_id === "undefined")
+                        throw new ApiError(400, "Chat id undefined");
 
-                const existsChat = await Chat.findByPk(chat_id);
+                    const existsChat = await Chat.findByPk(chat_id);
 
-                if(!existsChat)
-                    throw new ApiError(400, "Chat with input id is not found");
+                    if(!existsChat)
+                        throw new ApiError(400, "Chat with input id is not found");
 
-                client.join(msg.chat_id);
+                    client.join(msg.chat_id);
+                } catch (e) {
+                    if(e["getJson"]){
+                        client.emit("disconnected", e.getJson());
+                    } else {
+                        client.emit("disconnected", e.toString());
+                    }
+
+                    client.disconnect();
+                }
+            });
+
+            client.on("chat_message", async(msg) => {
+                this.#io.emit('chat_message', msg);
+            });
+
+            client.on("voice_sent", async(msg) => {
+                this.#io.emit('voice_received', msg);
             });
         });
     }

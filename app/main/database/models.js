@@ -73,8 +73,7 @@ const ChangePasswordRequest = connection.define(
         },
         code: {
             type: DataTypes.INTEGER,
-            allowNull: false,
-            unique: true
+            allowNull: false
         }
     }
 );

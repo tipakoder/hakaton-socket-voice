@@ -101,7 +101,31 @@ const getList = async(req) => {
     };
 }
 
+/**
+ * Remove chat
+ * @param req
+ * @return {Promise<void>}
+ */
+const remove = async(req) => {
+    const account = await verifyToken(req);
+    const chat_id = req.query.chat_id;
+
+    const existsChat = await Chat.findByPk(chat_id);
+
+    if(!existsChat)
+        throw new ApiError(500, "Chat wasn't found");
+
+    if(existsChat.dataValues.admin_id !== account.id)
+        throw ApiError.forbidden("You're not admin this chat");
+
+    if(!(await existsChat.destroy()))
+        throw ApiError.forbidden("Wtf error destroy");
+
+    return {};
+}
+
 module.exports = {
     create,
-    getList
+    getList,
+    remove
 }
