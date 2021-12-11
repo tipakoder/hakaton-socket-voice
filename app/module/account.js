@@ -112,7 +112,37 @@ const auth = async(req) => {
     }
 }
 
+/**
+ * Verify token
+ * @param req
+ * @return {Promise<void>}
+ */
+const verifyToken = async(req) => {
+    const token = req.headers.token || req.query.token;
+
+    if(!token)
+        throw ApiError.forbidden();
+
+    const account = await Account.findOne(
+        {
+            include: {
+                model: AccountSession,
+                where: {
+                    token
+                }
+            }
+        }
+    );
+
+    // If not found
+    if(!account)
+        throw ApiError.forbidden();
+
+    return account;
+}
+
 module.exports = {
     registration,
-    auth
+    auth,
+    verifyToken
 }
