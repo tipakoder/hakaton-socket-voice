@@ -40,13 +40,13 @@ const registration = async (req) => {
     if(nickname.length < 4)
         throw new ApiError(400, "Nickname less 4 symbols");
 
-    if(Account.findOne({where: {nickname}}))
+    if(await Account.findOne({where: {nickname}}))
         throw new ApiError(400, "Nickname already used");
 
     if(typeof email === "undefined")
         throw new ApiError(400, "Email undefined");
 
-    if(Account.findOne({where: {email}}))
+    if(await Account.findOne({where: {email}}))
         throw new ApiError(400, "Email already used");
 
     if(!(/(.+)@(\w+)\.(\w+)/.test(email)))
@@ -81,6 +81,38 @@ const registration = async (req) => {
     throw new ApiError(500, "Something error database");
 }
 
+/**
+ * Authorization
+ * @param req
+ * @return {Promise<void>}
+ */
+const auth = async(req) => {
+    const login = req.query.login;
+    const password = req.query.password;
+
+    if(typeof login === "undefined")
+        throw new ApiError(400, "Login undefined");
+
+    let accountByLogin;
+    if(
+        !(accountByLogin = await Account.findOne({where: {nickname: login}})) ||
+        !(accountByLogin = await Account.findOne({where: {email: login}}))
+    )
+        throw new ApiError(400, "Account with input login not found");
+
+    if(!bcrypt.compareSync(password, accountByLogin.dataValues.password))
+        throw new ApiError(400, "Password incorrect");
+
+    const id = accountByLogin.dataValues.id;
+    const token = await createSession(id);
+
+    return {
+        id,
+        token
+    }
+}
+
 module.exports = {
-    registration
+    registration,
+    auth
 }
