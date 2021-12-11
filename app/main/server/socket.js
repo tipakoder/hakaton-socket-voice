@@ -41,8 +41,18 @@ class Socket {
 
             try{
                 account = await verifyToken(req);
+            } catch (e) {
+                if(e["getJson"]){
+                    client.emit("disconnected", e.getJson());
+                } else {
+                    client.emit("disconnected", e.toString());
+                }
 
-                const chat_id = req.query.chat_id;
+                client.disconnect();
+            }
+
+            client.on("chat_listen", async (msg) => {
+                const chat_id = msg.chat_id;
 
                 if(typeof chat_id === "undefined")
                     throw new ApiError(400, "Chat id undefined");
@@ -62,22 +72,14 @@ class Socket {
                         chat_id
                     }
                 );
-            } catch (e) {
-                if(e["getJson"]){
-                    client.emit("disconnected", e.getJson());
-                } else {
-                    client.emit("disconnected", e.toString());
-                }
-
-                client.disconnect();
-            }
+            });
 
             client.on("chat_message", async(msg) => {
-                this.#io.emit('chat_message', msg);
+                this.#io.to(msg.chat_id).emit('chat_message', msg.data);
             });
 
             client.on("voice_sent", async(msg) => {
-                this.#io.emit('voice_received', msg);
+                this.#io.to(msg.chat_id).emit('voice_received', msg.data);
             });
         });
     }
