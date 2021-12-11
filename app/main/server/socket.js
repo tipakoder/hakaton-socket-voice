@@ -3,7 +3,9 @@ const colors = require("colors");
 const express = require("express");
 const {Server} = require("socket.io");
 
-class SocketServer {
+const ApiError = require("../apiError");
+
+class Socket {
     #io;
     #app;
     #port;
@@ -27,6 +29,22 @@ class SocketServer {
         );
 
         this.#io = new Server(this.#server);
+
+        // Set events to io
+        this.#io.on("connection", (client) => {
+            console.log(colors.blue(`SOCKET USER CONNECTED`));
+
+            client.on("add_user", (msg) => {
+                const room_id = msg.room_id;
+
+                if(typeof room_id === "undefined")
+                    throw new ApiError(400, "Room id undefined");
+
+                
+
+                client.join(msg.room_id);
+            });
+        });
     }
 
     /**
@@ -47,4 +65,4 @@ class SocketServer {
     }
 }
 
-module.exports = SocketServer;
+module.exports = Socket;

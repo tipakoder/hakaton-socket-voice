@@ -10,12 +10,22 @@ global.rootPath = __dirname;
 
 // Sync
 if(process.argv.indexOf("--sync") !== -1) {
-    return global.dbConnection.sync({force: true});
+    return global.dbConnection.sync({force: true}).then(async () => {
+        await global.dbModels.Account.create(
+            {
+                nickname: "Nikita",
+                email: "staryliss.nikita.2004@gmail.com",
+                password: require("bcrypt").hashSync("123123", 2)
+            }
+        );
+
+        global.dbConnection.close();
+    });
 }
 
 // Start servers
-const SocketServer = require("./app/main/socketServer");
-const HttpServer = require("./app/main/httpServer");
+const SocketServer = require("./app/main/server/socket");
+const HttpServer = require("./app/main/server/http");
 
 // Http server
 const httpServer = new HttpServer();

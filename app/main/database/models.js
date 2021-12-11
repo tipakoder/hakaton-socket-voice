@@ -41,7 +41,7 @@ const AccountSession = connection.define(
             allowNull: false,
             references: {
                 model: Account,
-                key: 'id'
+                key: "id"
             }
         }
     }
@@ -54,7 +54,75 @@ Account.hasMany(AccountSession, {
     }
 });
 
+const Chat = connection.define(
+    "chat",
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            unique: true,
+            allowNull: false,
+            autoIncrement: true
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        admin_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Account,
+                key: "id"
+            }
+        }
+    }
+);
+
+Account.hasMany(Chat, {
+    foreignKey: {
+        name: 'admin_id',
+        allowNull: false,
+    }
+});
+
+const ChatMember = connection.define(
+    "chat_member",
+    {
+        chat_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Chat,
+                key: "id"
+            }
+        },
+        account_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Account,
+                key: "id"
+            }
+        },
+    }
+);
+
+Chat.hasMany(ChatMember, {
+    foreignKey: {
+        name: 'chat_id',
+        allowNull: false,
+    }
+});
+
+Account.hasMany(ChatMember, {
+    foreignKey: {
+        name: 'account_id',
+        allowNull: false,
+    }
+});
+
+
 module.exports = {
     Account,
-    AccountSession
+    AccountSession,
+    Chat,
+    ChatMember
 }

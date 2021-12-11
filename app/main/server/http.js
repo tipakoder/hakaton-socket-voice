@@ -1,10 +1,14 @@
+const os = require("os");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
+const morgan = require('morgan');
 const colors = require("colors");
 const express = require("express");
+const bodyParser = require("body-parser");
+const expressFormData = require("express-form-data");
 
-class HttpServer {
+class Http {
     #app;
     #port;
 
@@ -16,6 +20,20 @@ class HttpServer {
 
         this.#app = express();
         this.#app.use(cors());
+        this.#app.use(morgan("dev"));
+        this.#app.use(bodyParser.json())
+        this.#app.use(bodyParser.urlencoded({ extended: true }));
+
+        this.#app.use(expressFormData.parse(
+            {
+                uploadDir: os.tmpdir(),
+                autoClean: true
+            }
+        ));
+
+        this.#app.use(expressFormData.format());
+        this.#app.use(expressFormData.stream());
+        this.#app.use(expressFormData.union());
 
         this.#app.use(`/:module/:action`, this.routing);
         this.#app.use((req, res) => {
@@ -77,4 +95,4 @@ class HttpServer {
     }
 }
 
-module.exports = HttpServer;
+module.exports = Http;

@@ -94,11 +94,10 @@ const auth = async(req) => {
         throw new ApiError(400, "Login undefined");
 
     let accountByLogin;
-    if(
-        !(accountByLogin = await Account.findOne({where: {nickname: login}})) ||
-        !(accountByLogin = await Account.findOne({where: {email: login}}))
-    )
-        throw new ApiError(400, "Account with input login not found");
+    if(!(accountByLogin = await Account.findOne({where: {nickname: login}}))) {
+        if(!(accountByLogin = await Account.findOne({where: {email: login}})))
+            throw new ApiError(400, "Account with input login not found");
+    }
 
     if(!bcrypt.compareSync(password, accountByLogin.dataValues.password))
         throw new ApiError(400, "Password incorrect");
@@ -134,11 +133,13 @@ const verifyToken = async(req) => {
         }
     );
 
-    // If not found
     if(!account)
         throw ApiError.forbidden();
 
-    return account;
+    delete account.dataValues.password;
+    delete account.dataValues.account_sessions;
+
+    return account.dataValues;
 }
 
 module.exports = {
