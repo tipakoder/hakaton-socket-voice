@@ -106,8 +106,8 @@ const auth = async(req) => {
         throw new ApiError(400, "Login undefined");
 
     let accountByLogin;
-    if(!(accountByLogin = await Account.findOne({where: {nickname: login}}))) {
-        if(!(accountByLogin = await Account.findOne({where: {email: login}})))
+        if(!(accountByLogin = await Account.findOne({where: {nickname: login}}))) {
+            if(!(accountByLogin = await Account.findOne({where: {email: login}})))
             throw new ApiError(400, "Account with input login not found");
     }
 
@@ -158,12 +158,20 @@ const verifyToken = async(req) => {
  * @return {Promise<void>}
  */
 const changePasswordRequest = async(req) => {
-    const account = verifyToken(req);
-    const code = generatorCode(6);
+    const login = req.get.login;
+    let code = generatorCode(6);
+
+    let accountByLogin;
+    if(!(accountByLogin = await Account.findOne({where: {nickname: login}}))) {
+        if(!(accountByLogin = await Account.findOne({where: {email: login}})))
+            throw new ApiError(400, "Account with input login not found");
+    }
+
+    code += accountByLogin.dataValues.id;
 
     const createRequest = await ChangePasswordRequest.create(
         {
-            account_id: account.id,
+            account_id: accountByLogin.id,
             code
         }
     );
@@ -184,15 +192,12 @@ const changePasswordRequest = async(req) => {
  * @return {Promise<void>}
  */
 const changePassword = async(req) => {
-    const account = verifyToken(req);
-
     const code = req.body.code;
     const password = req.body.password;
 
     const existsRequest = await ChangePasswordRequest.findOne(
         {
             where: {
-                account_id: account.id,
                 code: code
             }
         }
@@ -200,6 +205,8 @@ const changePassword = async(req) => {
 
     if(!existsRequest)
         throw new ApiError(400, "Code is not available");
+
+    const account = await Account.findByPk(existsRequest.dataValues.account_id);
 
     if(bcrypt.compareSync(password, account.password))
         throw new ApiError(400, "New password compare with old");
@@ -227,5 +234,7 @@ const changePassword = async(req) => {
 module.exports = {
     registration,
     auth,
-    verifyToken
+    verifyToken,
+    changePasswordRequest,
+    changePassword
 }

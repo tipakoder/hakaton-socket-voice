@@ -4,6 +4,7 @@ const express = require("express");
 const {Server} = require("socket.io");
 
 const ApiError = require("../apiError");
+const {Chat} = require("../database/models");
 
 class Socket {
     #io;
@@ -34,15 +35,18 @@ class Socket {
         this.#io.on("connection", (client) => {
             console.log(colors.blue(`SOCKET USER CONNECTED`));
 
-            client.on("add_user", (msg) => {
-                const room_id = msg.room_id;
+            client.on("add_user", async(msg) => {
+                const chat_id = msg.chat_id;
 
-                if(typeof room_id === "undefined")
-                    throw new ApiError(400, "Room id undefined");
+                if(typeof chat_id === "undefined")
+                    throw new ApiError(400, "Chat id undefined");
 
-                
+                const existsChat = await Chat.findByPk(chat_id);
 
-                client.join(msg.room_id);
+                if(!existsChat)
+                    throw new ApiError(400, "Chat with input id is not found");
+
+                client.join(msg.chat_id);
             });
         });
     }
