@@ -5,6 +5,7 @@ const {Server} = require("socket.io");
 
 const ApiError = require("../apiError");
 const {Chat} = require("../database/models");
+const {verifyToken} = require("../../module/account");
 
 class Socket {
     #io;
@@ -32,32 +33,44 @@ class Socket {
         this.#io = new Server(this.#server);
 
         // Set events to io
-        this.#io.on("connection", (client) => {
+        this.#io.on("connection", async (client) => {
             console.log(colors.blue(`SOCKET USER CONNECTED`));
 
-            client.on("add_user", async(msg) => {
-                try{
-                    const chat_id = msg.chat_id;
+            const req = client.handshake;
+            let account;
 
-                    if(typeof chat_id === "undefined")
-                        throw new ApiError(400, "Chat id undefined");
+            try{
+                account = await verifyToken(req);
 
-                    const existsChat = await Chat.findByPk(chat_id);
+                const chat_id = req.query.chat_id;
 
-                    if(!existsChat)
-                        throw new ApiError(400, "Chat with input id is not found");
+                if(typeof chat_id === "undefined")
+                    throw new ApiError(400, "Chat id undefined");
 
-                    client.join(msg.chat_id);
-                } catch (e) {
-                    if(e["getJson"]){
-                        client.emit("disconnected", e.getJson());
-                    } else {
-                        client.emit("disconnected", e.toString());
+                const existsChat = await Chat.findByPk(chat_id);
+
+                if(!existsChat)
+                    throw new ApiError(400, "Chat with input id is not found");
+
+                client.join(chat_id);
+
+                this.#io.to(chat_id).emit(
+                    "add_user",
+                    {
+                        id: account.id,
+                        nickname: account.nickname,
+                        chat_id
                     }
-
-                    client.disconnect();
+                );
+            } catch (e) {
+                if(e["getJson"]){
+                    client.emit("disconnected", e.getJson());
+                } else {
+                    client.emit("disconnected", e.toString());
                 }
-            });
+
+                client.disconnect();
+            }
 
             client.on("chat_message", async(msg) => {
                 this.#io.emit('chat_message', msg);
