@@ -1,6 +1,6 @@
 const {verifyToken} = require("./account");
 const ApiError = require("../main/apiError");
-const {Chat, ChatMember} = require("../main/database/models");
+const {Chat, ChatMember, AccountSession} = require("../main/database/models");
 
 /**
  * Create chat
@@ -38,10 +38,11 @@ const create = async(req) => {
 
     const chat_id = chatCreating.dataValues.id;
     const chat_members = [];
-    chat_members.push(
+
+    ChatMember.create(
         {
-            account_id: account.id,
-            chat_id
+            chat_id,
+            account_id: account.id
         }
     );
 
@@ -68,8 +69,36 @@ const create = async(req) => {
     throw new ApiError(500, "Error create chat members");
 }
 
+/**
+ * Get all chats of my account
+ * @param req
+ * @return {Promise<void>}
+ */
+const getList = async(req) => {
+    const account = await verifyToken(req);
 
+    const listMyChats = await Chat.findAll(
+        {
+            include: {
+                model: ChatMember,
+                where: {
+                    account_id: account.id
+                }
+            }
+        }
+    );
+
+    if(!listMyChats)
+        return {
+            chats: []
+        };
+
+    return {
+        chats: listMyChats
+    };
+}
 
 module.exports = {
-    create
+    create,
+    getList
 }

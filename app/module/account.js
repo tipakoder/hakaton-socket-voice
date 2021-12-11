@@ -58,6 +58,8 @@ const registration = async (req) => {
     if(password.length < 6)
         throw new ApiError(400, "Password less 6 symbols");
 
+    console.log(password)
+
     const password_hash = bcrypt.hashSync(password, 2);
 
     const accountCreate = await Account.create(

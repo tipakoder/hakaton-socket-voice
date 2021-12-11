@@ -112,7 +112,21 @@ Chat.hasMany(ChatMember, {
     }
 });
 
+ChatMember.belongsTo(Chat, {
+    foreignKey: {
+        name: "chat_id",
+        allowNull: false
+    }
+})
+
 Account.hasMany(ChatMember, {
+    foreignKey: {
+        name: 'account_id',
+        allowNull: false,
+    }
+});
+
+ChatMember.belongsTo(Account, {
     foreignKey: {
         name: 'account_id',
         allowNull: false,
