@@ -11,6 +11,7 @@ class Socket {
     #io;
     #app;
     #port;
+    #chats;
     #server;
 
     /**
@@ -51,9 +52,7 @@ class Socket {
                 client.disconnect();
             }
 
-            client.on("chat_listen", async (msg) => {
-                const chat_id = msg.chat_id;
-
+            client.on("join room", async (chat_id) => {
                 if(typeof chat_id === "undefined")
                     throw new ApiError(400, "Chat id undefined");
 
@@ -62,24 +61,30 @@ class Socket {
                 if(!existsChat)
                     throw new ApiError(400, "Chat with input id is not found");
 
+                if(this.#chats[chat_id]) {
+                    this.#chats[chat_id].push(client);
+                } else {
+                    this.#chats[chat_id] = [client];
+                }
+
+                const otherUser = this.#chats[chat_id].find(id => id !== client.id);
+                if(otherUser) {
+                    this.#io.to(chat_id).emit("user joined", client.id);
+                }
+
                 client.join(chat_id);
-
-                this.#io.to(chat_id).emit(
-                    "add_user",
-                    {
-                        id: account.id,
-                        nickname: account.nickname,
-                        chat_id
-                    }
-                );
             });
 
-            client.on("chat_message", async(msg) => {
-                this.#io.to(msg.chat_id).emit('chat_message', msg.data);
+            client.on("offer", payload => {
+                this.#io.to(payload.chat_id).emit("offer", payload);
             });
 
-            client.on("voice_sent", async(msg) => {
-                this.#io.to(msg.chat_id).emit('voice_received', msg.data);
+            client.on("answer", payload => {
+                this.#io.to(payload.chat_id).emit("answer", payload);
+            });
+
+            client.on("ice-candidate", incoming => {
+                this.#io.to(incoming.chat_id).emit("ice-candidate", incoming.candidate);
             });
         });
     }
