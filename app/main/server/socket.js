@@ -78,6 +78,7 @@ class Socket {
 
                 const otherUser = this.#chats[chat_id].find(id => id !== client.id);
                 if(otherUser) {
+                    client.emit("other user", otherUser);
                     this.#io.to(chat_id).emit("user joined", client.id);
                 }
 
