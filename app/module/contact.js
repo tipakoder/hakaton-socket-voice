@@ -46,6 +46,33 @@ const create = async(req) => {
     };
 }
 
+/**
+ * Get list contacts for account
+ * @param req
+ * @return {Promise<void>}
+ */
+const getList = async(req) => {
+    const account = await verifyToken(req);
+
+    const getListResult = await Contact.findAll(
+        {
+            where: {
+                account_id: account.id
+            }
+        }
+    );
+
+    if(!getListResult)
+        return {
+            contacts: []
+        };
+
+    return {
+        contacts: getListResult
+    }
+}
+
 module.exports = {
-    create
+    create,
+    getList
 }
