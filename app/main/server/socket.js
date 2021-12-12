@@ -82,15 +82,15 @@ class Socket {
             });
 
             client.on("offer", payload => {
-                this.#io.to(payload.chat_id).emit("offer", payload);
+                this.#io.to(payload.target).emit("offer", payload);
             });
 
             client.on("answer", payload => {
-                this.#io.to(payload.chat_id).emit("answer", payload);
+                this.#io.to(payload.target).emit("answer", payload);
             });
 
             client.on("ice-candidate", incoming => {
-                this.#io.to(incoming.chat_id).emit("ice-candidate", incoming.candidate);
+                this.#io.to(incoming.target).emit("ice-candidate", incoming.candidate);
             });
         });
     }
