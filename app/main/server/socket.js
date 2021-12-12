@@ -1,4 +1,6 @@
+const fs = require("fs");
 const http = require("http");
+const https = require("https");
 const colors = require("colors");
 const express = require("express");
 const {Server} = require("socket.io");
@@ -21,15 +23,29 @@ class Socket {
         this.#port = port;
 
         this.#app = express();
-        this.#server = http.createServer(this.#app,
-            {
+
+        if(parseInt(process.env.HTTPS) === 1) {
+            this.#server = https.createServer({
+                key: fs.readFileSync("server.key"),
+                cert: fs.readFileSync("server.cert"),
                 cors:{
                     origin: "*",
                     credentials: true
                 },
                 transports: ['websocket']
-            }
-        );
+            }, this.#app)
+        } else {
+            this.#server = http.createServer(this.#app,
+                {
+                    cors:{
+                        origin: "*",
+                        credentials: true
+                    },
+                    transports: ['websocket']
+                }
+            );
+        }
+
 
         this.#io = new Server(this.#server);
 
