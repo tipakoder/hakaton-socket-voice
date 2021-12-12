@@ -32,8 +32,24 @@ const generatorCode = (length = 6) => {
     const chars = "0123456789";
     let result = "";
     for(let i = 0; i < length; i++) {
-        result += chars[Math.floor(Math.random() * (chars.length + 1))];
+        result += chars[Math.floor(Math.random() * (chars.length - 1))];
     }
+    return result;
+}
+
+/**
+ * Generate account phone
+ * @param id
+ */
+const generatePhone = (id) => {
+    let result = "";
+    for(let i = 0; i < 2; i++) {
+        result += generatorCode(3).toString() + "-";
+    }
+    for(let i = 0; i < (3 - id.toString().length); i++) {
+        result += "0";
+    }
+    result += id.toString();
     return result;
 }
 
@@ -84,6 +100,21 @@ const registration = async (req) => {
     if(accountCreate) {
         const id = accountCreate.dataValues.id;
         const token = await createSession(id);
+        const phone = generatePhone(id);
+
+        const setPhone = await accountCreate.update(
+            {
+                phone: phone
+            },
+            {
+                where: {
+                    id
+                }
+            }
+        );
+
+        if(!setPhone)
+            throw new ApiError(400, "Update phone failed");
 
         return {
             id,

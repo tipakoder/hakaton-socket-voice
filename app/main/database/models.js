@@ -16,6 +16,10 @@ const Account = connection.define(
             allowNull: false,
             unique: true
         },
+        phone: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         email: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -92,90 +96,81 @@ ChangePasswordRequest.belongsTo(Account, {
     }
 });
 
-const Chat = connection.define(
-    "chat",
+const Contact = connection.define(
+    "contact",
     {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
-            unique: true,
             allowNull: false,
             autoIncrement: true
         },
-        name: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        admin_id: {
+        account_id: {
             type: DataTypes.INTEGER,
+            allowNull: false,
             references: {
                 model: Account,
                 key: "id"
             }
+        },
+        target_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: Account,
+                key: "id"
+            }
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+    }
+)
+
+Account.hasMany(
+    Contact,
+    {
+        foreignKey: {
+            name: 'account_id',
+            allowNull: false,
         }
     }
 );
 
-Account.hasMany(Chat, {
-    foreignKey: {
-        name: 'admin_id',
-        allowNull: false,
-    }
-});
-
-const ChatMember = connection.define(
-    "chat_member",
+Contact.belongsTo(
+    Account,
     {
-        chat_id: {
-            type: DataTypes.INTEGER,
-            references: {
-                model: Chat,
-                key: "id"
-            }
-        },
-        account_id: {
-            type: DataTypes.INTEGER,
-            references: {
-                model: Account,
-                key: "id"
-            }
-        },
+        foreignKey: {
+            name: 'account_id',
+            allowNull: false,
+        }
     }
 );
 
-Chat.hasMany(ChatMember, {
-    foreignKey: {
-        name: 'chat_id',
-        allowNull: false,
+Account.hasMany(
+    Contact,
+    {
+        foreignKey: {
+            name: 'target_id',
+            allowNull: false,
+        }
     }
-});
+);
 
-ChatMember.belongsTo(Chat, {
-    foreignKey: {
-        name: "chat_id",
-        allowNull: false
+Contact.belongsTo(
+    Account,
+    {
+        foreignKey: {
+            name: 'target_id',
+            allowNull: false,
+        }
     }
-})
-
-Account.hasMany(ChatMember, {
-    foreignKey: {
-        name: 'account_id',
-        allowNull: false,
-    }
-});
-
-ChatMember.belongsTo(Account, {
-    foreignKey: {
-        name: 'account_id',
-        allowNull: false,
-    }
-});
-
+);
 
 module.exports = {
     Account,
     AccountSession,
-    Chat,
-    ChatMember,
-    ChangePasswordRequest
+    ChangePasswordRequest,
+    Contact
 }
