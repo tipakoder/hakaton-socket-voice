@@ -13,7 +13,7 @@ class Socket {
     #io;
     #app;
     #port;
-    #chats;
+    #chats = {};
     #server;
 
     /**
