@@ -61,6 +61,8 @@ class Socket {
                 client.disconnect();
             }
 
+            client.emit("connected", "You're was connected");
+
             client.on("join room", async (chat_id) => {
                 if(typeof chat_id === "undefined")
                     throw new ApiError(400, "Chat id undefined");
