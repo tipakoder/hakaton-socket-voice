@@ -2,6 +2,7 @@ const os = require("os");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
+const https = require("https");
 const morgan = require('morgan');
 const colors = require("colors");
 const express = require("express");
@@ -89,9 +90,18 @@ class Http {
      * Start socket server
      */
     start() {
-        this.#app.listen(this.#port, () => {
-            console.log(colors.rainbow(`Http server was started on :${this.#port}`));
-        })
+        if(parseInt(process.env.HTTPS) === 1) {
+            https.createServer({
+                key: fs.readFileSync("server.key"),
+                cert: fs.readFileSync("server.cert")
+            }, this.#app).listen(this.#port, () => {
+                console.log(colors.rainbow(`Http server was started on :${this.#port}`));
+            });
+        } else {
+            this.#app.listen(this.#port, () => {
+                console.log(colors.rainbow(`Http server was started on :${this.#port}`));
+            });
+        }
     }
 }
 
