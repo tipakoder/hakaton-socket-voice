@@ -47,7 +47,7 @@ class Socket {
         }
 
 
-        this.#io = new Server(this.#server);
+        this.#io = new Server(this.#server, {origins: '*:*'});
 
         // Set events to io
         this.#io.on("connection", async (client) => {
