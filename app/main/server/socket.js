@@ -29,7 +29,7 @@ class Socket {
                 key: fs.readFileSync("server.key"),
                 cert: fs.readFileSync("server.cert"),
                 cors:{
-                    origin: "*",
+                    origin: "https://127.0.0.1:80",
                     credentials: true
                 },
                 transports: ['websocket']
