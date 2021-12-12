@@ -65,11 +65,6 @@ class Socket {
                 if(typeof chat_id === "undefined")
                     throw new ApiError(400, "Chat id undefined");
 
-                const existsChat = await Chat.findByPk(chat_id);
-
-                if(!existsChat)
-                    throw new ApiError(400, "Chat with input id is not found");
-
                 if(this.#chats[chat_id]) {
                     this.#chats[chat_id].push(client);
                 } else {
