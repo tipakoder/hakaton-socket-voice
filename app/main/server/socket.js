@@ -66,9 +66,9 @@ class Socket {
                     throw new ApiError(400, "Chat id undefined");
 
                 if(this.#chats[chat_id]) {
-                    this.#chats[chat_id].push(client);
+                    this.#chats[chat_id].push(client.id);
                 } else {
-                    this.#chats[chat_id] = [client];
+                    this.#chats[chat_id] = [client.id];
                 }
 
                 const otherUser = this.#chats[chat_id].find(id => id !== client.id);
