@@ -62,13 +62,17 @@ const getList = async(req) => {
         }
     );
 
-    if(!getListResult)
-        return {
-            contacts: []
-        };
+    let request = [];
+    if(getListResult)
+        for(let result of getListResult) {
+            result = result.dataValues;
+            result.account = await Account.findByPk(result.target_id);
+            delete result.account.password;
+            request.push(result);
+        }
 
     return {
-        contacts: getListResult
+        contacts: request
     }
 }
 
