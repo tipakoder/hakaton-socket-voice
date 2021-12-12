@@ -77,6 +77,7 @@ class Socket {
                     this.#io.to(chat_id).emit("user joined", client.id);
                 }
 
+                client.emit("joined", "You're was added to room");
                 client.join(chat_id);
             });
 
