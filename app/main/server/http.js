@@ -93,7 +93,11 @@ class Http {
         if(parseInt(process.env.HTTPS) === 1) {
             https.createServer({
                 key: fs.readFileSync("server.key"),
-                cert: fs.readFileSync("server.cert")
+                cert: fs.readFileSync("server.cert"),
+                cors:{
+                    origin: "*",
+                    credentials: true
+                }
             }, this.#app).listen(this.#port, () => {
                 console.log(colors.rainbow(`Http server was started on :${this.#port}`));
             });
