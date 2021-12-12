@@ -38,7 +38,8 @@ class Socket {
             cors: {
                 origin: "*",
                 methods: ["GET", "POST"]
-            }
+            },
+            transports: ["websocket"]
         });
 
         // Set events to io
