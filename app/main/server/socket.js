@@ -42,57 +42,35 @@ class Socket {
             transports: ["websocket"]
         });
 
-        // Set events to io
-        this.#io.on("connection", async (client) => {
-            console.log(colors.blue(`SOCKET USER CONNECTED`));
+        const rooms = {};
 
-            const req = client.handshake;
-            let account;
-
-            try{
-                account = await verifyToken(req);
-            } catch (e) {
-                if(e["getJson"]){
-                    client.emit("disconnected", e.getJson());
+        this.#io.on("connection", socket => {
+            socket.on("join room", roomID => {
+                if (rooms[roomID]) {
+                    rooms[roomID].push(socket.id);
                 } else {
-                    client.emit("disconnected", e.toString());
+                    rooms[roomID] = [socket.id];
                 }
-
-                client.disconnect();
-            }
-
-            client.emit("connected", "You're was connected");
-
-            client.on("join room", async (chat_id) => {
-                console.log(chat_id)
-                if(this.#chats[chat_id]) {
-                    this.#chats[chat_id].push(client.id);
-                } else {
-                    this.#chats[chat_id] = [client.id];
+                const otherUser = rooms[roomID].find(id => id !== socket.id);
+                if (otherUser) {
+                    socket.emit("other user", otherUser);
+                    socket.to(otherUser).emit("user joined", socket.id);
                 }
-
-                const otherUser = this.#chats[chat_id].find(id => id !== client.id);
-                if(otherUser) {
-                    client.emit("other user", otherUser);
-                    this.#io.to(chat_id).emit("user joined", client.id);
-                }
-
-                client.emit("joined", "You're was added to room");
-                client.join(chat_id);
             });
 
-            client.on("offer", payload => {
+            socket.on("offer", payload => {
                 this.#io.to(payload.target).emit("offer", payload);
             });
 
-            client.on("answer", payload => {
+            socket.on("answer", payload => {
                 this.#io.to(payload.target).emit("answer", payload);
             });
 
-            client.on("ice-candidate", incoming => {
+            socket.on("ice-candidate", incoming => {
                 this.#io.to(incoming.target).emit("ice-candidate", incoming.candidate);
             });
         });
+
     }
 
     /**
