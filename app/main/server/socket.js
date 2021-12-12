@@ -28,27 +28,18 @@ class Socket {
             this.#server = https.createServer({
                 key: fs.readFileSync("server.key"),
                 cert: fs.readFileSync("server.cert"),
-                handlePreflightRequest: (req, res) => {
-                    const headers = {
-                        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-                        "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
-                        "Access-Control-Allow-Credentials": true
-                    };
-                    res.writeHead(200, headers);
-                    res.end();
-                },
-                transports: ['websocket']
             }, this.#app)
         } else {
-            this.#server = http.createServer(this.#app,
-                {
-                    transports: ['websocket']
-                }
-            );
+            this.#server = http.createServer(this.#app);
         }
 
 
-        this.#io = new Server(this.#server, {origins: '*:*'});
+        this.#io = new Server(this.#server, {
+            cors: {
+                origin: "*",
+                methods: ["GET", "POST"]
+            }
+        });
 
         // Set events to io
         this.#io.on("connection", async (client) => {
